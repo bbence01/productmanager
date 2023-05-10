@@ -1,0 +1,22 @@
+/* app.component.scss */
+
+table img {
+  border-radius: 50%;
+}
+
+.alert img {
+  max-width: 100%;
+  height: auto;
+}
+
+.container {
+  .row {
+    .col {
+      button {
+        width: 100%;
+      }
+    }
+  }
+}
+
+/* You can add more custom styles here if needed */
