@@ -2,7 +2,7 @@
 import { Component } from '@angular/core';
 import { Product } from './models/product';
 import { ProductService } from './models/productservice';
-import { combineLatest } from 'rxjs';
+import { combineLatest, map, of } from 'rxjs';
 import { CommentP } from './models/comment';
 import { User } from './models/user';
 import { HttpClient } from '@angular/common/http';
@@ -67,6 +67,7 @@ export class AppComponent {
         u.title = x.title
         u.description = x.description
         u.discountPercentage = x.discountPercentage
+        u.price = x.price
         u.rating = x.rating
         u.stock = x.stock
         u.brand = x.brand
@@ -89,8 +90,11 @@ export class AppComponent {
   private pairCommentsAndProducts() {
     if (this.products.length > 0 && this.comments.length > 0) {
       this.comments.forEach(comment => {
+        console.log('Ingredient:', comment);
         const product = this.products.find(product => product.id === comment.postId );
+        console.log( product);
         if (product) {
+          console.log('Updated request:', product);
           product.commentsprods.push(comment);
           console.log(product);
         }
@@ -181,29 +185,7 @@ toggleEditComment(commentId: number): void {
 
 
 
-  countBrands(): void {
-    const brandCounts: { [key: string]: number } = {};
-    this.products.forEach((product) => {
-      if (!brandCounts[product.brand]) {
-        brandCounts[product.brand] = 0;
-      }
-      brandCounts[product.brand]++;
-    });
-    alert(JSON.stringify(brandCounts));
-  }
 
-  avgRatings(): void {
-    const totalRatings = this.products.reduce((sum, product) => sum + product.rating, 0);
-    const avgRating = totalRatings / this.products.length;
-    alert(`Average rating: ${avgRating.toFixed(2)}`);
-  }
-
-  stockLevel(): void {
-    const avgStock = this.products.reduce((sum, product) => sum + product.stock, 0) / this.products.length;
-    const belowAvgStock = this.products.filter((product) => product.stock < avgStock)
-      .map((product) => `ID: ${product.id}, Name: ${product.title}`).join('\n');
-    alert(`Products with stock level below average:\n${belowAvgStock}`);
-  }
 
   closeProductDetails(): void {
     this.selectedProduct = null;
@@ -241,5 +223,53 @@ fetch('https://dummyjson.com/comments/' + i, {
 .then(res => res.json())
 .then(console.log);
   }
+
+
+  countCategory(): void {
+    of(this.products)
+      .pipe(
+        map((products) => {
+          const categoryCount: { [key: string]: number } = {};
+          products.forEach((product) => {
+            categoryCount[product.category] = (categoryCount[product.category] || 0) + 1;
+          });
+          return categoryCount;
+        })
+      )
+      .subscribe((categoryCount) => {
+        alert(JSON.stringify(categoryCount));
+      });
+  }
+
+  maxDiscount(): void {
+    of(this.products)
+      .pipe(
+        map((products) => {
+          let maxDiscount = 0;
+          products.forEach((product) => {
+            maxDiscount = Math.max(maxDiscount, product.discountPercentage);
+          });
+          return maxDiscount;
+        })
+      )
+      .subscribe((maxDiscount) => {
+        alert(`Max discount: ${maxDiscount}%`);
+      });
+  }
+
+  priceLevel(): void {
+    of(this.products)
+      .pipe(
+        map((products) => {
+          const averagePrice = products.reduce((sum, product) => sum + product.price, 0) / products.length;
+          const aboveAverage = products.filter((product) => product.price > averagePrice);
+          return aboveAverage.map((product) => ({ id: product.id, name: product.title }));
+        })
+      )
+      .subscribe((aboveAverage) => {
+        alert(`Products above average price: ${JSON.stringify(aboveAverage)}`);
+      });
+  }
+
 
 }
